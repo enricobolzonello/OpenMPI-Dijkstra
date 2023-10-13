@@ -1,7 +1,7 @@
 #include <check.h>
-#include "../src/sequential_Dijkstra.h"
+#include "../src/sequential/sequential_Dijkstra.h"
 
-START_TEST (test_dijkstra_generateEmptyGraph) {
+START_TEST (test_seqdijkstra_generateEmptyGraph) {
     struct Graph G;
     generateEmptyGraph(3, 2, &G);
     ck_assert_int_eq(G.N, 3);
@@ -10,7 +10,7 @@ START_TEST (test_dijkstra_generateEmptyGraph) {
     freeGraph(&G);
 }
 
-Suite * dijkstra_suite(void)
+Suite * seqdijkstra_suite(void)
 {
     Suite *s;
     TCase *tc_core;
@@ -20,7 +20,7 @@ Suite * dijkstra_suite(void)
     /* Core test case */
     tc_core = tcase_create("Core");
 
-    tcase_add_test(tc_core, test_dijkstra_generateEmptyGraph);
+    tcase_add_test(tc_core, test_seqdijkstra_generateEmptyGraph);
     suite_add_tcase(s, tc_core);
 
     return s;
@@ -32,7 +32,7 @@ int main(void)
     Suite *s;
     SRunner *sr;
 
-    s = dijkstra_suite();
+    s = seqdijkstra_suite();
     sr = srunner_create(s);
 
     srunner_run_all(sr, CK_NORMAL);

@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 3.5)
 
 project(OpenMPI-Dijkstra)
 
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 # Custom cmake modules
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
