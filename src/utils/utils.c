@@ -33,7 +33,7 @@ void generateEmptyGraph(int N, int E, struct Graph* G)
 
 // parsing input from file as in RoadNet dataset format (https://snap.stanford.edu/data/#road)
 // inputs a graph struct and the file path
-void inputRoadNet(struct Graph* G, char** argv)
+void inputRoadNet(struct Graph* G, char** argv, bool costs)
 {
     FILE *f;
     int nodes, edges;
@@ -65,8 +65,14 @@ void inputRoadNet(struct Graph* G, char** argv)
 
     int u,v;
     while(fgets(line, sizeof(line), f) != NULL){
-        sscanf(line, "%d\t%d\n", &u, &v);
-        setStar(G->s, u, v, 1);
+        if(costs){
+            int cost;
+            sscanf(line, "%d\t%d\t%d\n", &u, &v, &cost);
+            setStar(G->s, u, v, cost);
+        }else{
+            sscanf(line, "%d\t%d\n", &u, &v);
+            setStar(G->s, u, v, 1);
+        }
     }
     printf("File scanned successfully!\n");
 }

@@ -8,7 +8,7 @@ int main(int argc, char *argv[]){
         return 0;
     }
 
-    inputRoadNet(&G, argv);
+    inputRoadNet(&G, argv, false);
 
     printStar(G.s);
 
