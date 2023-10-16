@@ -1,46 +1,7 @@
 #include<mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-int* inputRoadNet(char** argv, int* n)
-{
-    FILE *f;
-    int nodes, edges;
-    char line[100];
-
-    f = fopen(argv[1], "r");
-    if(f == NULL){
-        perror("cannot open file");
-        exit(EXIT_FAILURE);
-    }
-    printf("File opened!\n");
-
-    //skip two lines
-    fscanf(f, "%*[^\n]\n");
-    fscanf(f, "%*[^\n]\n");
-    //read the number of nodes and edges
-    fscanf(f, "%*[^:]:");
-    fscanf(f, "%d", &nodes);
-    fscanf(f, "%*[^:]:");
-    fscanf(f, "%d", &edges);
-
-    printf("nodes: %d\tedges: %d\n", nodes, edges);
-    *n = nodes;
-
-    //skip one (two? dont know why) line(s)
-    fscanf(f, "%*[^\n]\n");
-    fscanf(f, "%*[^\n]\n");
-
-    int* mat = malloc(nodes * nodes * sizeof(int));
-
-    int u,v,cost;
-    while(fgets(line, sizeof(line), f) != NULL){
-        sscanf(line, "%d\t%d\t%d\n", &u, &v, &cost);
-        mat[u*nodes + v] = cost;
-    }
-    printf("File scanned successfully!\n");
-    return mat;
-}
+#include "../utils/utils.h"
 
 int calculateLocalSize(struct star* s, int start_node, int end_node){
     int total = 0;
@@ -57,7 +18,7 @@ int main(int argc, char *argv[]){
     int n_col_per_proc;
     struct star* s = NULL;
     int* sizes;
-    int * globalptr = NULL;
+    int* globalptr_to, *globalptr_costs = NULL;
     
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -77,10 +38,10 @@ int main(int argc, char *argv[]){
         setStar(s, 4, 5, 1);
         setStar(s, 5, 4, 8);
         if (s->n_nodes % world_size != 0){
-            perror("Error: number of processors must be dividable by the number of nodes");
+            perror("Error: number of processors must be divisible by the number of nodes");
             MPI_Abort(MPI_COMM_WORLD, MPI_ERR_UNKNOWN);
         }
-        n_col_per_proc = s->n_nodes / world_size; // condition: number of processors must be a divider to number of nodes (for now)
+        n_col_per_proc = s->n_nodes / world_size;
 
         int temp;
         for(int proc=0; proc<world_size; proc++){
@@ -88,10 +49,12 @@ int main(int argc, char *argv[]){
             proc0_subsizes[proc] = temp;
             MPI_Send(&temp, 1, MPI_INT, proc, 0, MPI_COMM_WORLD);
         }
-        globalptr = &(s->to[0]);
+        globalptr_to = &(s->to[0]);
+        globalptr_costs = &(s->cost[0]);
         printf("<--- STAR --->");
         printStar(s);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Recv(&localsize, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     printf("rank :%d local size: %d\n, ", world_rank, localsize);
@@ -137,7 +100,8 @@ int main(int argc, char *argv[]){
         }
     }            
 
-    int* localdata = malloc(sizeof(int) * localsize);
+    int* localdata_to = malloc(sizeof(int) * localsize);
+    int* localdata_costs = malloc(sizeof(int) * localsize);
 
     /*
     int MPI_Alltoallw(const void *sendbuf, const int sendcounts[],
@@ -145,14 +109,23 @@ int main(int argc, char *argv[]){
                   void *recvbuf, const int recvcounts[], const int rdispls[],
                   const MPI_Datatype recvtypes[], MPI_Comm comm)*/
 
-    MPI_Alltoallw(globalptr, sendcounts, senddispls, sendtypes,
-                  &(localdata[0]), recvcounts, recvdispls, recvtypes, 
+    MPI_Alltoallw(globalptr_to, sendcounts, senddispls, sendtypes,
+                  &(localdata_to[0]), recvcounts, recvdispls, recvtypes, 
                   MPI_COMM_WORLD);
+    
+    MPI_Alltoallw(globalptr_costs, sendcounts, senddispls, sendtypes,
+                  &(localdata_costs[0]), recvcounts, recvdispls, recvtypes, 
+                  MPI_COMM_WORLD);
+
+    MPI_Barrier(MPI_COMM_WORLD);
 
     for (int proc=0; proc<world_size; proc++) {
         if (proc == world_rank) {
             printf("\nRank %d:\n", proc);
-            printarray(localdata, localsize);
+            printf("To: ");
+            printarray(localdata_to, localsize);
+            printf("Costs: ");
+            printarray(localdata_costs, localsize);
         }
         MPI_Barrier(MPI_COMM_WORLD);            
     }

@@ -10,6 +10,29 @@ START_TEST (test_seqdijkstra_generateEmptyGraph) {
     freeGraph(&G);
 }
 
+/*
+0	1
+0	2
+0	3
+1	5
+2	4
+3	5
+4	5
+5	0
+*/
+START_TEST (test_seqdijkstra_simpleexample) {
+    struct Graph G;
+    generateEmptyGraph(6, 8, &G);
+    setStar(G.s, 0, 1, 1);
+    setStar(G.s, 0, 2, 1);
+    setStar(G.s, 0, 3, 1);
+    setStar(G.s, 1, 5, 1);
+    setStar(G.s, 2, 4, 1);
+    setStar(G.s, 3, 5, 1);
+    setStar(G.s, 4, 5, 1);
+    setStar(G.s, 5, 0, 1);
+}
+
 Suite * seqdijkstra_suite(void)
 {
     Suite *s;

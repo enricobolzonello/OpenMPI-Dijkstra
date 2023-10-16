@@ -105,7 +105,8 @@ int getCost(struct star* s, int from_edge, int to_edge){
 int* getAllEdgesFrom(struct star* s, int from_edge){
     int* ret = malloc(getNumEdgesFrom(s, from_edge));
     int i=0;
-    for(int j=s->first[from_edge]; j<s->first[from_edge+1]; j++){
+    int end = from_edge + 1 == s->n_nodes ? s->n_edges : s->first[from_edge + 1];
+    for(int j=s->first[from_edge]; j<end; j++){
         ret[i++] = s->to[j];
     }
     return ret;
