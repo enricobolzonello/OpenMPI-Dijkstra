@@ -38,6 +38,7 @@ struct star {
 
 // ----- INITIALIZER -----
 void initStar(struct star* s, int e, int n);
+void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]);
 
 // ----- GETTERS -----
 int getNumEdges(struct star* s);

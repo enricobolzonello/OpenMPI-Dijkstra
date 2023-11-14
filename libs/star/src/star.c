@@ -66,6 +66,14 @@ void initStar(struct star* s, int e, int n){
     }
 }
 
+void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]){
+    initStar(s, e, n);
+
+    s->first = first;
+    s->to = to;
+    s->cost = costs;
+}
+
 int getNumEdges(struct star* s){
     return s->n_edges;
 }
