@@ -34,6 +34,22 @@ void partialSort_s(struct star* s, int start, int end){
 }
 #undef swap
 
+int endIndex(struct star* s, int index){
+    int end = s->n_nodes; // in case there is no more out-connected nodes, return the length of the 'to' list
+
+    int found = 0;
+    int i = index + 1;
+    while(!found && i<s->n_nodes){
+        if(connected[i] != 0){
+            end = s->first[i];
+            found = 1;
+        }
+        i=i+1;
+    }
+
+    return end;
+}
+
 // ------- STAR DATA STRUCTURE -------
 
 void initStar(struct star* s, int e, int n, int offset){
@@ -65,6 +81,8 @@ void initStar(struct star* s, int e, int n, int offset){
         perror("star.initStar: error in 'cost' memory allocation");     // LCOV_EXCL_LINE
         exit(EXIT_FAILURE);                                             // LCOV_EXCL_LINE
     }
+
+    connected = (int*)calloc(n, sizeof(int));
 }
 
 void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]){
@@ -155,6 +173,8 @@ void setStar(struct star* s, int from_edge, int to_edge, int cost){
     // to values are sorted at increasing values
     // costs follows the order of to values
     partialSort(s, s->first[from_edge - s->offset], k);
+    // mark the node as connected
+    connected[from_edge] = 1;
 }
 #undef partialSort
 
@@ -175,7 +195,7 @@ void printStar(struct star* s){
     printf("\n\n");
 
     printf("Arcs:\n");
-    // TODO: not right
+
     for(i=s->offset; i<s->n_nodes+s->offset; i++){
         int* to = getAllEdgesFrom(s, i);
         for(int j=0; j<getNumEdgesFrom(s, i); j++){

@@ -40,6 +40,8 @@ struct star {
     int offset;
 };
 
+int* connected;
+
 // ----- INITIALIZER -----
 void initStar(struct star* s, int e, int n, int offset);
 void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]);
