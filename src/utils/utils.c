@@ -28,7 +28,7 @@ void generateEmptyGraph(int N, int E, struct Graph* G)
     // initialize star
     struct star* s = malloc(sizeof(struct star));
     G->s = s;
-    initStar(G->s, E, N);
+    initStar(G->s, E, N, 0);
 }
 
 void initializeGraph(struct Graph* G, int N, int E, int first[], int to[], int costs[]){
@@ -106,7 +106,7 @@ void inputRoadNet(struct Graph* G, char** argv, bool costs)
         }
         i++;
     }
-    printf("File scanned successfully!\n");
+    printf("File scanned successfully!\n\n");
 }
 
 void freeGraph(struct Graph* G){
@@ -116,7 +116,6 @@ void freeGraph(struct Graph* G){
 }
 
 void printGraph(struct Graph* G){
-    printf("<---- GRAPH ---->\n");
     printStar(G->s);
 }
 

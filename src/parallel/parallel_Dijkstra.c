@@ -26,14 +26,13 @@ void dijkstra(struct Graph* G_local, int source, int n, MPI_Comm comm){
     int globalmin[2];
     MPI_Comm_rank(comm, &rank);
 
-    printf("rank: %d\there 1\n", rank);
-
     MPI_Barrier(MPI_COMM_WORLD);
 
     // initialize minimum cost found by Dijkstra with the cost from `s` to `i`
     for(i=0; i<G_local->N; i++){
         if(getCost(G_local->s, source, i) != -1){
             G_local->L[i] = getCost(G_local->s, source, i);
+            printf("rank: %d \t L[%d]=%d\n", rank, i, G_local->L[i]);
         }
     }
 
@@ -41,8 +40,6 @@ void dijkstra(struct Graph* G_local, int source, int n, MPI_Comm comm){
     if(rank == 0){
         G_local->flag[0] =  VISITED;
     }
-
-    printf("rank: %d\there\n", rank);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -128,24 +125,20 @@ int main(int argc, char *argv[]){
         globalptr_to = &(G->s->to[0]);
         globalptr_costs = &(G->s->cost[0]);
         globalptr_first = &(G->s->first[0]);
-        printf("<--- STAR --->");
+        printf("INPUT GRAPH:");
         printStar(G->s);
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Bcast(&n_col_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    printf("rank: %d n_col:%d n:%d\n", world_rank, n_col_per_proc, n);
     MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Recv(&localsize, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    printf("rank :%d local size: %d\n, ", world_rank, localsize);
     MPI_Barrier(MPI_COMM_WORLD);
 
     int offsets[n_col_per_proc];
     MPI_Scatter(globalptr_first, n_col_per_proc, MPI_INT, &offsets, n_col_per_proc, MPI_INT, 0, MPI_COMM_WORLD);
-    printf("rank: %d offsets: ", world_rank);
-    printarray(offsets, n_col_per_proc);
     MPI_Barrier(MPI_COMM_WORLD);
 
     int sendcounts[ world_size ];
@@ -213,7 +206,7 @@ int main(int argc, char *argv[]){
 
     for (int proc=0; proc<world_size; proc++) {
         if (proc == world_rank) {
-            printf("\nRANK %d\n", proc);
+            printf("\nRANK %d", proc);
             printGraph(local_G);
         }
         MPI_Barrier(MPI_COMM_WORLD);            
@@ -222,10 +215,12 @@ int main(int argc, char *argv[]){
     // RUN DIJKSTRA
     dijkstra(local_G, 0, n, MPI_COMM_WORLD);
 
+    if(world_rank == 0){
+        globaldist = malloc(sizeof(int) * n);
+    }
+
     // GATHER THE RESULTS
-    // TODO: throws segmentation fault here
-    // probably because the receive count is not correct (variable for each process)
-    MPI_Gather(local_G->L, G->N, MPI_INT, globaldist, G->N, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(local_G->L, 1, MPI_INT, globaldist, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // PRINT RESULTS
     if(world_rank == 0){

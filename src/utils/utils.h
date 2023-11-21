@@ -1,14 +1,12 @@
 #ifndef UTILS
 #define UTILS
 
-#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include "star.h"
 
-#define INFTY INT_MAX
 #define NOT_VISITED 0
 #define VISITED 1
 #define NO_CONN -1

@@ -36,7 +36,7 @@ void partialSort_s(struct star* s, int start, int end){
 
 // ------- STAR DATA STRUCTURE -------
 
-void initStar(struct star* s, int e, int n){
+void initStar(struct star* s, int e, int n, int offset){
     if(n < 1){
         perror("star.initStar: number of nodes is zero or negative");
         exit(EXIT_FAILURE);
@@ -49,6 +49,7 @@ void initStar(struct star* s, int e, int n){
 
     s->n_edges = e;
     s->n_nodes = n;
+    s->offset = offset;
     s->first = (int*)malloc(sizeof(int) * n);
     if(s->first == NULL){
         perror("star.initStar: error in 'first' memory allocation");    // LCOV_EXCL_LINE
@@ -67,7 +68,7 @@ void initStar(struct star* s, int e, int n){
 }
 
 void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]){
-    initStar(s, e, n);
+    initStar(s, e, n, first[0]);
 
     s->first = first;
     s->to = to;
@@ -83,38 +84,32 @@ int getNumNodes(struct star* s){
 }
 
 int getNumEdgesFrom(struct star* s, int from_edge){
-    if(from_edge+1 == s->n_nodes){
-        return s->n_edges - s->first[from_edge];
+    if(from_edge - s->offset +1 == s->n_nodes){
+        return s->n_edges - s->first[from_edge - s->offset];
     }
-    return s->first[from_edge+1] - s->first[from_edge];
+    return s->first[from_edge - s->offset + 1] - s->first[from_edge - s->offset];
 }
 
 int getCost(struct star* s, int from_edge, int to_edge){
-    if(from_edge < 0 || from_edge >= s->n_nodes){
-        perror("star.getCost: from_edge out of index");
-        exit(EXIT_FAILURE);
+    if(from_edge < s->first[0] || from_edge > s->first[s->n_nodes-1]){
+        return INFTY;
     }
 
-    if(to_edge < 0 || to_edge > s->n_edges){
-        perror("star.getCost: to_edge out of index");
-        exit(EXIT_FAILURE);
-    }
-
-    int offset_start = s->first[from_edge];
-    int offset_end = from_edge + 1 == s->n_nodes ? s->n_edges : s->first[from_edge + 1];
+    int offset_start = s->first[from_edge - s->offset];
+    int offset_end = from_edge - s->offset + 1 == s->n_nodes ? s->n_edges : s->first[from_edge - s->offset + 1];
     for(int i = offset_start; i < offset_end; i++){
         if(s->to[i] == to_edge){
             return s->cost[i];
         }
     }
-    return -1;
+    return INFTY;
 }
 
 int* getAllEdgesFrom(struct star* s, int from_edge){
     int* ret = malloc(getNumEdgesFrom(s, from_edge));
     int i=0;
-    int end = from_edge + 1 == s->n_nodes ? s->n_edges : s->first[from_edge + 1];
-    for(int j=s->first[from_edge]; j<end; j++){
+    int end = from_edge - s->offset + 1 == s->n_nodes ? s->n_edges : s->first[from_edge - s->offset + 1];
+    for(int j=s->first[from_edge - s->offset]; j<end; j++){
         ret[i++] = s->to[j];
     }
     return ret;
@@ -122,18 +117,18 @@ int* getAllEdgesFrom(struct star* s, int from_edge){
 
 #define partialSort partialSort_s
 void setStar(struct star* s, int from_edge, int to_edge, int cost){
-    if(from_edge < 0 || from_edge >= s->n_nodes){
+    if(from_edge < 0 || from_edge - s->offset >= s->n_nodes){
         perror("star.setStar: from_edge out of index");
         exit(EXIT_FAILURE);
     }
 
-    if(to_edge < 0 || to_edge > s->n_edges){
+    if(to_edge < 0 || to_edge - s->offset > s->n_edges){
         perror("star.setStar: to_edge out of index");
         exit(EXIT_FAILURE);
     }
 
     if(cost <= 0){
-        perror("star.setStar: cost is less than zero");
+        perror("star.setStar: cost must be greater than zero");
         exit(EXIT_FAILURE);
     }
 
@@ -146,27 +141,27 @@ void setStar(struct star* s, int from_edge, int to_edge, int cost){
 
     // insert to_edge in the sorted subset of ending edges which starting edges is from_edge
     // shift all the elements starting from the next subset to the right by one
-    int k = from_edge + 1 == s->n_nodes ? s->n_edges-1 : s->first[from_edge + 1];
+    int k = from_edge - s->offset + 1 == s->n_nodes ? s->n_edges-1 : s->first[from_edge - s->offset + 1];
     memmove(&(s->to[k+1]), &(s->to[k]), (s->n_edges - k-1)*sizeof(int));
     memmove(&(s->cost[k+1]), &(s->cost[k]), (s->n_edges - k-1)*sizeof(int));
     // insert element (to_edge and cost) in place of the first shifted element
     s->to[k] = to_edge;
     s->cost[k] = cost;
     // increment the offset of all elements after from_edge
-    for(int i=from_edge+1; i<s->n_nodes; i++){
+    for(int i=from_edge - s->offset + 1; i<s->n_nodes; i++){
         s->first[i] = s->first[i] + 1;
     }
     // sort the elements from first[from_edge] to k
     // to values are sorted at increasing values
     // costs follows the order of to values
-    partialSort(s, s->first[from_edge], k);
+    partialSort(s, s->first[from_edge - s->offset], k);
 }
 #undef partialSort
 
 // LCOV_EXCL_START
 void printStar(struct star* s){
     int i;
-    printf("\n<--- Print Star --->\n\n");
+    printf("\n--- Print Star ---\n\n");
     printf("First: ");
     for(i=0; i<s->n_nodes; i++){
         printf("%d ", s->first[i]);
@@ -180,13 +175,14 @@ void printStar(struct star* s){
     printf("\n\n");
 
     printf("Arcs:\n");
-    for(i=0; i<s->n_nodes; i++){
+    // TODO: not right
+    for(i=s->offset; i<s->n_nodes+s->offset; i++){
         int* to = getAllEdgesFrom(s, i);
         for(int j=0; j<getNumEdgesFrom(s, i); j++){
             printf("%d ---> %d (cost: %d)\n", i, to[j], getCost(s, i, to[j]));
         }
     }
-    printf("\n<--- End Print Star --->\n");
+    printf("\n--- End Print Star ---\n\n");
 }
 // LCOV_EXCL_STOP
 

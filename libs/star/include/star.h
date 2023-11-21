@@ -17,7 +17,7 @@
 // Notes:
 // 1) Negative costs are not modeled
 // 2) Nodes are directional, cannot model bi-directional nodes with one connection (needs a connection forward and backwards)
-// 3) It is assumed that nodes are represented by a consecutive sequence of integers starting from 0
+// 3) It is assumed that nodes are represented by a consecutive sequence of integers starting from an initial value 'offset'
 //
 // Future Development(s):
 // - Mapping function to represent generic nodes in the data structure
@@ -27,6 +27,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
+
+#define INFTY INT_MAX
 
 struct star {
     int* first;
@@ -34,10 +37,11 @@ struct star {
     int* cost;
     int n_edges;
     int n_nodes;
+    int offset;
 };
 
 // ----- INITIALIZER -----
-void initStar(struct star* s, int e, int n);
+void initStar(struct star* s, int e, int n, int offset);
 void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]);
 
 // ----- GETTERS -----
