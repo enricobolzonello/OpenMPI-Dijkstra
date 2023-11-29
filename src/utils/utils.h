@@ -25,6 +25,6 @@ void printGraph(struct Graph* G);
 void inputRoadNet(struct Graph* G, char** argv, bool cost);
 void freeGraph(struct Graph* G);
 void printarray(int* a, int size);
-void initializeGraph(struct Graph* G, int N, int E, int first[], int to[], int cost[]);
+void initializeGraph(struct Graph* G, int N, int E, int first[], int to[], int cost[], int offset);
 
 #endif

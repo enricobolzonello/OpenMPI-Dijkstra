@@ -44,7 +44,7 @@ int* connected;
 
 // ----- INITIALIZER -----
 void initStar(struct star* s, int e, int n, int offset);
-void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]);
+void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[], int offset);
 
 // ----- GETTERS -----
 int getNumEdges(struct star* s);

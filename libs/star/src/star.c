@@ -85,8 +85,9 @@ void initStar(struct star* s, int e, int n, int offset){
     connected = (int*)calloc(n, sizeof(int));
 }
 
-void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[]){
-    initStar(s, e, n, first[0]);
+// TODO: offset is wrong
+void initStar_arr(struct star* s, int e, int n, int first[], int to[], int costs[], int offset){
+    initStar(s, e, n, offset);
 
     s->first = first;
     s->to = to;
@@ -108,6 +109,7 @@ int getNumEdgesFrom(struct star* s, int from_edge){
     return s->first[from_edge - s->offset + 1] - s->first[from_edge - s->offset];
 }
 
+// TODO: change
 int getCost(struct star* s, int from_edge, int to_edge){
     if(from_edge < s->first[0] || from_edge > s->first[s->n_nodes-1]){
         return INFTY;
@@ -152,10 +154,10 @@ void setStar(struct star* s, int from_edge, int to_edge, int cost){
 
     // TODO: not right
     // check if the edge is already set
-    /*if(getCost(s, from_edge, to_edge) != -1){
+    if(getCost(s, from_edge, to_edge) != INFTY){
         perror("star.setStar: edge is already set");
         exit(EXIT_FAILURE);
-    }*/
+    }
 
     // insert to_edge in the sorted subset of ending edges which starting edges is from_edge
     // shift all the elements starting from the next subset to the right by one
@@ -181,6 +183,8 @@ void setStar(struct star* s, int from_edge, int to_edge, int cost){
 // LCOV_EXCL_START
 void printStar(struct star* s){
     int i;
+    printf("offset: %d\n", s->offset);
+
     printf("\n--- Print Star ---\n\n");
     printf("First: ");
     for(i=0; i<s->n_nodes; i++){
@@ -191,6 +195,11 @@ void printStar(struct star* s){
     printf("To:    ");
     for(i=0; i<s->n_edges; i++){
         printf("%d ", s->to[i]);
+    }
+    printf("\n");
+    printf("Costs:    ");
+    for(i=0; i<s->n_edges; i++){
+        printf("%d ", s->cost[i]);
     }
     printf("\n\n");
 

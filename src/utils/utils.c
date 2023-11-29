@@ -19,7 +19,7 @@ void generateEmptyGraph(int N, int E, struct Graph* G)
     }
 
     // initialize flags (by default it is filled with zeros)
-	G->flag = (int*)malloc(sizeof(int) * G->N);
+	G->flag = (int*)calloc(G->N, sizeof(int));
 	if(G->flag == NULL){ 
         perror("malloc error on flag");
         exit(EXIT_FAILURE); 
@@ -31,7 +31,7 @@ void generateEmptyGraph(int N, int E, struct Graph* G)
     initStar(G->s, E, N, 0);
 }
 
-void initializeGraph(struct Graph* G, int N, int E, int first[], int to[], int costs[]){
+void initializeGraph(struct Graph* G, int N, int E, int first[], int to[], int costs[], int offset){
     G->N = N;
 
     // initialize lengths (filled with infty)
@@ -46,16 +46,16 @@ void initializeGraph(struct Graph* G, int N, int E, int first[], int to[], int c
     }
 
     // initialize flags (by default it is filled with zeros)
-	G->flag = (int*)malloc(sizeof(int) * G->N);
+	G->flag = (int*)calloc(G->N, sizeof(int));
 	if(G->flag == NULL){ 
-        perror("malloc error on flag");
+        perror("calloc error on flag");
         exit(EXIT_FAILURE); 
     }
 
     struct star* s = malloc(sizeof(struct star));
     G->s = s;
 
-    initStar_arr(G->s, E, N, first, to, costs);
+    initStar_arr(G->s, E, N, first, to, costs, offset);
 }
 
 // parsing input from file as in RoadNet dataset format (https://snap.stanford.edu/data/#road)
@@ -93,6 +93,8 @@ void inputRoadNet(struct Graph* G, char** argv, bool costs)
     int u,v;
     int i=0;
     while(fgets(line, sizeof(line), f) != NULL){
+        u = 0;
+        v = 0;
         if(i%100000 == 0){
             printf("parsed %d edges\n", i);
         }
@@ -102,6 +104,7 @@ void inputRoadNet(struct Graph* G, char** argv, bool costs)
             setStar(G->s, u, v, cost);
         }else{
             sscanf(line, "%d\t%d\n", &u, &v);
+            printf("u: %d\tv: %d\n", u,v);
             setStar(G->s, u, v, 1);
         }
         i++;
