@@ -15,6 +15,7 @@ void dijkstra(struct Graph* G, int source)
         if(getCost(G->s, source,i) != -1){
             G->L[i] = getCost(G->s, source, i);
         }
+        G->pred[i] = source;
     }
 
     G->flag[source] = VISITED;
@@ -38,9 +39,37 @@ void dijkstra(struct Graph* G, int source)
             if(getCost(G->s, h, j) != NO_CONN){
                 if(G->flag[j] == NOT_VISITED && G->L[h] + getCost(G->s, h, j) < G->L[j]){
                     G->L[j] = G->L[h] + getCost(G->s, h, j);
+                    G->pred[j] = h;
                 }
             } 
         }
     }
 
+}
+
+int main(int argc, char *argv[]){
+    struct Graph G;
+    
+    if(argc != 2){
+        perror("must provide the file location argument");
+        return 0;
+    }
+
+    inputRoadNet(&G, argv, false);
+
+    printStar(G.s);
+
+    dijkstra(&G, 0);
+
+    char *b;
+	b = malloc(G.N * 5);
+	if(b == NULL) {perror("malloc"); exit(EXIT_FAILURE); }
+	sprintf(b,"\nLowest distances: \tL=[");
+	for(int j = 0; j<G.N; j++){
+		sprintf(&b[strlen(b)], "%d,", G.L[j]);
+	}
+	printf("%s]\n", b);
+
+    freeGraph(&G);
+    return 0;
 }

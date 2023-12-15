@@ -17,6 +17,7 @@ struct Graph
     struct star* s; // data structure representing the graph
 
     int* L; // shortest path length for each node
+    int* pred; // pred[i] saves the predecessor of node i
     int* flag; // flag the nodes the algorithm has flag
 };
 

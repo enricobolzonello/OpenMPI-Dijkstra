@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../utils/utils.h"
+#include "../utils/starutils.h"
 
 void Print_dists(int global_dist[], int n)
 {
@@ -23,17 +23,20 @@ void Print_dists(int global_dist[], int n)
 }
 
 // TODO: integrate custom source node
-int *dijkstra(struct Graph *G_local, int source, int n, MPI_Comm comm, int* L)
+void dijkstra(struct Graph *G_local, int source, int n, MPI_Comm comm, int* L)
 {
     int rank, i, j, min, h;
     int localmin[2];
     int globalmin[2];
     MPI_Comm_rank(comm, &rank);
 
+    int* flag;
+    flag = calloc(n, sizeof(int));
+
     // initialization of the first node
     if (rank == 0)
     {
-        G_local->flag[0] = VISITED;
+        flag[0] = VISITED;
     }
 
     for (i = 0; i < n - 1; i++)
@@ -42,9 +45,9 @@ int *dijkstra(struct Graph *G_local, int source, int n, MPI_Comm comm, int* L)
         h = -1;
         // identify h = argmin{L[j] : j not in S}
         // finds the minimum in the vertices assigned to the process
-        for (j = 0; j < G_local->N; j++)
+        for (j = 0; j < n; j++)
         {
-            if (G_local->flag[j] == NOT_VISITED && L[j] < min)
+            if (flag[j] == NOT_VISITED && L[j] < min)
             {
                 min = L[j];
                 h = j;
@@ -53,6 +56,7 @@ int *dijkstra(struct Graph *G_local, int source, int n, MPI_Comm comm, int* L)
 
         localmin[0] = min;
         localmin[1] = (h == -1) ? -1 : rank * G_local->N + h;
+        //printf("rank: %d\tlocalmin[0]: %d\tlocalmin[1]: %d\n", rank, localmin[0], localmin[1]);
 
         // as described here: https://rookiehpc.org/mpi/docs/mpi_minloc/index.html
         MPI_Allreduce(localmin, globalmin, 1, MPI_2INT, MPI_MINLOC, comm);
@@ -62,7 +66,7 @@ int *dijkstra(struct Graph *G_local, int source, int n, MPI_Comm comm, int* L)
         if (globalmin[1] / G_local->N == rank)
         {
             h = globalmin[1] % G_local->N;
-            G_local->flag[h] = VISITED;
+            flag[h] = VISITED;
         }
 
         // update the minimum costs
@@ -70,17 +74,18 @@ int *dijkstra(struct Graph *G_local, int source, int n, MPI_Comm comm, int* L)
         for (j = 0; j < n; j++)
         {
             cost = getCost(G_local->s, h, j);
+            printf("rank:%d\th:%d\tj:%d\tcost:%d\n", rank, h, j, cost);
             if (h != -1 && cost != INFTY)
             {
-                if (G_local->flag[j] == NOT_VISITED && L[h] + cost < L[j])
+                if (flag[j] == NOT_VISITED && L[h] + cost < L[j])
                 {
                     L[j] = L[h] + cost;
+                    printf("L at iteration %d\n", i);
+                    printarray(L, n);
                 }
             }
         }
     }
-
-    return L;
 }
 
 int calculateLocalSize(struct star *s, int start_node, int end_node)
@@ -232,7 +237,7 @@ int main(int argc, char *argv[])
     {
         if (proc == world_rank)
         {
-            printf("\nRANK %d", proc);
+            printf("\nRANK %d\t", proc);
             printGraph(local_G);
         }
         MPI_Barrier(MPI_COMM_WORLD);
@@ -287,6 +292,8 @@ int main(int argc, char *argv[])
 
     // RUN DIJKSTRA
     dijkstra(local_G, 0, n, MPI_COMM_WORLD, globaldist);
+
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // PRINT RESULTS
     if(world_rank == 0){

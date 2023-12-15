@@ -104,19 +104,19 @@ int getNumNodes(struct star* s){
 
 int getNumEdgesFrom(struct star* s, int from_edge){
     if(from_edge - s->offset +1 == s->n_nodes){
-        return s->n_edges - s->first[from_edge - s->offset];
+        return s->n_edges - (s->first[from_edge - s->offset] - s->first[0]);
     }
     return s->first[from_edge - s->offset + 1] - s->first[from_edge - s->offset];
 }
 
 // TODO: change
 int getCost(struct star* s, int from_edge, int to_edge){
-    if(from_edge < s->first[0] || from_edge > s->first[s->n_nodes-1]){
+    if(from_edge < s->offset || from_edge > s->offset + s->n_nodes){
         return INFTY;
     }
 
-    int offset_start = s->first[from_edge - s->offset];
-    int offset_end = from_edge - s->offset + 1 == s->n_nodes ? s->n_edges : s->first[from_edge - s->offset + 1];
+    int offset_start = s->first[from_edge - s->offset] - s->first[0];
+    int offset_end = from_edge - s->offset + 1 == s->n_nodes ? s->n_edges : (s->first[from_edge - s->offset + 1] - s->first[0]);
     for(int i = offset_start; i < offset_end; i++){
         if(s->to[i] == to_edge){
             return s->cost[i];
@@ -128,8 +128,9 @@ int getCost(struct star* s, int from_edge, int to_edge){
 int* getAllEdgesFrom(struct star* s, int from_edge){
     int* ret = malloc(getNumEdgesFrom(s, from_edge));
     int i=0;
-    int end = from_edge - s->offset + 1 == s->n_nodes ? s->n_edges : s->first[from_edge - s->offset + 1];
-    for(int j=s->first[from_edge - s->offset]; j<end; j++){
+    int start = s->first[from_edge - s->offset] - s->first[0];
+    int end = from_edge - s->offset + 1 == s->n_nodes ? s->n_edges : (s->first[from_edge - s->offset + 1] - s->first[0]);
+    for(int j=start; j<end; j++){
         ret[i++] = s->to[j];
     }
     return ret;
@@ -184,6 +185,7 @@ void setStar(struct star* s, int from_edge, int to_edge, int cost){
 void printStar(struct star* s){
     int i;
     printf("offset: %d\n", s->offset);
+    printf("nodes: %d\tedges: %d\n", s->n_nodes, s->n_edges);
 
     printf("\n--- Print Star ---\n\n");
     printf("First: ");

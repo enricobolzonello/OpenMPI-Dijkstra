@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "starutils.h"
 
 // generate an empty graph given the number of nodes `N` and number of edges `E`
 // initializes an empty graph struct with `flag` array initialzied with INFTY 
@@ -104,11 +104,11 @@ void inputRoadNet(struct Graph* G, char** argv, bool costs)
             setStar(G->s, u, v, cost);
         }else{
             sscanf(line, "%d\t%d\n", &u, &v);
-            printf("u: %d\tv: %d\n", u,v);
             setStar(G->s, u, v, 1);
         }
         i++;
     }
+    printf("parsed %d edges\n", i);
     printf("File scanned successfully!\n\n");
 }
 
