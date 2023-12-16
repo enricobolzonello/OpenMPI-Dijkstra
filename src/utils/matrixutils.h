@@ -12,8 +12,12 @@
 
 int** alloc2d(int n, int m);
 void free2d(int **array);
-int getN(FILE* f);
-void inputRoadNet_matrix(int** matrix, FILE* f, bool costs);
+int inputRoadNet_getN(FILE* f);
+void edgelist_matrix(int** matrix, FILE* f, bool costs);
+int random_getN(FILE* f);
 void initalizeMatrix(int** matrix,int val, int n, int m);
+void printarray(int* a, int size, char* label);
+void printdists(int global_dist[], int n);
+void printmatrix(int** matrix, int n, int m);
 
 #endif

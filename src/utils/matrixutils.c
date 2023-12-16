@@ -14,7 +14,7 @@ void free2d(int **array) {
     free(array);
 }
 
-int getN(FILE* f){
+int inputRoadNet_getN(FILE* f){
     int nodes, edges;
     //skip two lines
     fscanf(f, "%*[^\n]\n");
@@ -27,21 +27,35 @@ int getN(FILE* f){
 
     printf("nodes: %d\tedges: %d\n", nodes, edges);
 
+    fscanf(f, "%*[^\n]\n");
+
     return nodes;
 }
 
-void inputRoadNet_matrix(int** matrix, FILE* f, bool costs){
-    char line[100];
+int random_getN(FILE* f){
+    int nodes, edges;
+    //read the number of nodes and edges
+    fscanf(f, "%*[^:]:");
+    fscanf(f, "%d", &nodes);
+    fscanf(f, "%*[^:]:");
+    fscanf(f, "%d", &edges);
 
-    //skip one (two? dont know why) line(s)
-    fscanf(f, "%*[^\n]\n");
-    fscanf(f, "%*[^\n]\n");
+    printf("nodes: %d\tedges: %d\n", nodes, edges);
+
+    return nodes;
+}
+
+void edgelist_matrix(int** matrix, FILE* f, bool costs){
+    char* line = NULL;
+    size_t len = 0;
 
     int u,v;
     int i=0;
-    while(fgets(line, sizeof(line), f) != NULL){
+    getline(&line, &len, f); // skip empty line
+    while (getline(&line, &len, f) != -1){
         u = 0;
         v = 0;
+
         if(i%100000 == 0){
             printf("parsed %d edges\n", i);
         }
@@ -67,5 +81,52 @@ void initalizeMatrix(int** matrix, int val, int n, int m){
         for(j=0; j<m; j++){
             matrix[i][j] = val;
         }
+    }
+}
+
+void printarray(int* a, int size, char* label){
+    printf("%s:\t", label);
+    for(int i=0; i<size; i++){
+        printf("%d ", a[i]);
+    }
+    printf("\n");
+}
+
+void printdists(int global_dist[], int n)
+{
+    int v;
+
+    printf("  v    dist 0->v\n");
+    printf("----   ---------\n");
+
+    for (v = 1; v < n; v++)
+    {
+        if (global_dist[v] == INFTY)
+        {
+            printf("%3d       %5s\n", v, "inf");
+        }
+        else
+            printf("%3d       %4d\n", v, global_dist[v]);
+    }
+    printf("\n");
+}
+
+void printmatrix(int** matrix, int n, int m){
+    int row, columns;
+    for (row = 0; row < n; row++)
+    {
+        for (columns = 0; columns < m; columns++)
+        {
+            int val = matrix[row][columns];
+            if (val == INFTY)
+            {
+                printf("%s\t", "inf");
+            }
+            else
+            {
+                printf("%d\t", val);
+            }
+        }
+        printf("\n");
     }
 }

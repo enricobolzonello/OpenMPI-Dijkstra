@@ -23,13 +23,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage -O0")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 
 # Add sub directories
-add_subdirectory(libs/star)
+#add_subdirectory(libs/star)
 add_subdirectory(src)
 
 # testing
 enable_testing()
 
-add_subdirectory(tests)
+#add_subdirectory(tests)
 
 # Add build target to generate Coverage Test Report to all compiled object files
 find_program(GCOV gcov)

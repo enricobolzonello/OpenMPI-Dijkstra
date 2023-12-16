@@ -1,14 +1,6 @@
 #include <mpi.h>
 #include "../utils/matrixutils.h"
 
-void printarray(int* a, int size, char* label){
-    printf("%s:\t", label);
-    for(int i=0; i<size; i++){
-        printf("%d ", a[i]);
-    }
-    printf("\n");
-}
-
 // TODO: include custom source
 void dijkstra(int** localdata, int n, int n_col_per_proc, int* L, int* pred, MPI_Comm comm)
 {
@@ -78,6 +70,7 @@ int main(int argc, char *argv[]){
     void* sendptr = NULL;
     int *localdist, *localpred;
     int* globaldist, *globalpred;
+    double t0, t1;
 
     MPI_Datatype sendvec = NULL, sendtype = NULL, recvec, rectype;
 
@@ -95,12 +88,17 @@ int main(int argc, char *argv[]){
         }
         printf("File opened!\n");
 
-        n = getN(f);
+        n = random_getN(f);
         printf("n: %d\n", n);
         M = alloc2d(n, n);
         initalizeMatrix(M, INFTY, n, n);
         sendptr = &(M[0][0]);
-        inputRoadNet_matrix(M, f, false);
+        edgelist_matrix(M, f, true);
+
+        fclose(f);
+
+        // print matrix
+        // printmatrix(M, n, n);
 
         if(n % world_size != 0){
             perror("Error: number of processors must be divisible by the number of nodes");
@@ -120,9 +118,9 @@ int main(int argc, char *argv[]){
 
     localdata = alloc2d(n, n_col_per_proc);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-
     // create MPI datatype for scattering matrix columns
+
+    t0 = MPI_Wtime();
 
     // create send type
     if (world_rank == 0)
@@ -151,17 +149,6 @@ int main(int argc, char *argv[]){
 
     MPI_Scatter(sendptr, n_col_per_proc, sendtype, &(localdata[0][0]), n_col_per_proc, rectype, 0, MPI_COMM_WORLD);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    // check that the scatter worked
-    /*for(int i=0; i<n; i++){
-        for(int j=0; j<n_col_per_proc; j++){
-            printf("rank: %d\tlocaldata[%d][%d]:%d\n", world_rank,i, world_rank*n_col_per_proc + j, localdata[i][j]);
-        }
-    }*/
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
     localdist = (int*)malloc(sizeof(int) * n_col_per_proc);
     localpred = (int*)malloc(sizeof(int) * n_col_per_proc);
 
@@ -176,16 +163,19 @@ int main(int argc, char *argv[]){
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    printf("RANK: %d\n", world_rank);
-    printarray(localdist, n_col_per_proc, "dist");
-    printarray(localpred, n_col_per_proc, "pred");
-
     MPI_Gather(localdist, n_col_per_proc, MPI_INT, globaldist, n_col_per_proc, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Gather(localpred, n_col_per_proc, MPI_INT, globalpred, n_col_per_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
+    t1 = MPI_Wtime();
+
     if(world_rank == 0){
-        printarray(globaldist, n, "dist");
+        printf("\nRESULTS:\n");
+        printdists(globaldist, n);
         printarray(globalpred, n, "pred");
+
+        printf("\n");
+        //time = 1.e5 * (t1 - t0);
+        printf ("execution time: %8.6f seconds\n", t1-t0 );
     }
 
     // free all dynamically allocated resources
