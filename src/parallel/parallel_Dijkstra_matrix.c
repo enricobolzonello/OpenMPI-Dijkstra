@@ -60,6 +60,8 @@ void dijkstra(int** localdata, int n, int n_col_per_proc, int* L, int* pred, MPI
             }
         }
     }
+
+    free(flag);
 }
 
 int main(int argc, char *argv[]){
